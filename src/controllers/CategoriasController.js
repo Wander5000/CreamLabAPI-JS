@@ -1,4 +1,4 @@
-const pool = require('../database.js');
+const pool = require('../config/database.js');
 
 const getAllCategories = async (req, res) => {
   try {
@@ -36,7 +36,7 @@ const putCategory = async (req, res) => {
     if (rowCount === 0) {
       return res.status(404).json({ message: 'Categoría no encontrada' });
     }
-    res.json({ message: 'Categoría actualizada exitosamente' });
+    res.status(204).json({ message: 'Categoría actualizada exitosamente' });
   } catch (error) {
     res.status(500).json({ message: 'Error al actualizar la categoría', error });
   }
@@ -52,7 +52,7 @@ const deleteCategory = async (req, res) => {
     if (rowCount === 0) {
       return res.status(404).json({ message: 'Categoría no encontrada' });
     }
-    res.json({ message: 'Categoría eliminada exitosamente' });
+    res.status(204).json({ message: 'Categoría eliminada exitosamente' });
   } catch (error) {
     res.status(500).json({ message: 'Error al eliminar la categoría', error });
   }

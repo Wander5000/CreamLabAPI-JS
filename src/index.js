@@ -1,6 +1,11 @@
+//Bibliotecas
 const express = require('express');
 const cors = require('cors');
+const morgan = require('morgan');
 require('dotenv').config();
+
+//Llamado a las rutas
+const AuthRouter = require('./routes/Auth');
 const CategoriasRouter = require('./routes/Categorias');
 const ClientesRouter = require('./routes/Clientes');
 const EstadosRouter = require('./routes/Estados');
@@ -16,19 +21,21 @@ app.set('port', process.env.PORT || 3000);
 
 // Middleware
 app.use(express.json());
+app.use(morgan('dev'));
 app.use(cors());
 
 // Rutas
 app.get('/', (req, res) => { res.send('¡Bienvenido a la API de CreamLab!'); });
-app.use('/api/categorias', CategoriasRouter);
-app.use('/api/clientes', ClientesRouter);
-app.use('/api/estados', EstadosRouter);
-app.use('/api/insumos', InsumosRouter);
-app.use('/api/pedidos', PedidosRouter);
-app.use('/api/productos', ProductosRouter);
-app.use('/api/roles', RolesRouter);
-app.use('/api/usuarios', UsuariosRouter);
-app.use('/api/ventas', VentasRouter);
+app.use('/api/Auth', AuthRouter);
+app.use('/api/Categorias', CategoriasRouter);
+app.use('/api/Clientes', ClientesRouter);
+app.use('/api/Estados', EstadosRouter);
+app.use('/api/Insumos', InsumosRouter);
+app.use('/api/Pedidos', PedidosRouter);
+app.use('/api/Productos', ProductosRouter);
+app.use('/api/Roles', RolesRouter);
+app.use('/api/Usuarios', UsuariosRouter);
+app.use('/api/Ventas', VentasRouter);
 
 app.listen(app.get('port'), () => {
   console.log(`Servidor escuchando en el puerto ${app.get('port')}`);

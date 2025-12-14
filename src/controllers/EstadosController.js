@@ -1,4 +1,4 @@
-const pool = require('../database.js');
+const pool = require('../config/database.js');
 
 const getAllStates = async (req, res) => {
   try {
@@ -36,7 +36,7 @@ const putState = async (req, res) => {
     if (rowCount === 0) {
       return res.status(404).json({ message: 'Estado no encontrado' });
     }
-    res.json({ message: 'Estado actualizado exitosamente' });
+    res.status(204).json({ message: 'Estado actualizado exitosamente' });
   } catch (error) {
     res.status(500).json({ message: 'Error al actualizar el estado', error });
   }
@@ -52,7 +52,7 @@ const deleteState = async (req, res) => {
     if (rowCount === 0) {
       return res.status(404).json({ message: 'Estado no encontrado' });
     }
-    res.json({ message: 'Estado eliminado exitosamente' });
+    res.status(204).json({ message: 'Estado eliminado exitosamente' });
   }
   catch (error) {
     res.status(500).json({ message: 'Error al eliminar el estado', error });

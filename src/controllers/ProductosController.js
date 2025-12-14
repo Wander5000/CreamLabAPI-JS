@@ -1,4 +1,4 @@
-const pool = require('../database.js');
+const pool = require('../config/database.js');
 
 const getAllProducts = async (req, res) => {
   try {

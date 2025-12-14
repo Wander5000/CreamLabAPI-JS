@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const { getAllUsers, postUser, changeUserStatus } = require('../controllers/UsuariosController.js');
 
 
-router.get('/', (req, res) => { res.send('Obtener todos los usuarios'); });
-router.post('/', (req, res) => { res.send('Crear un nuevo usuario'); });
-router.put('/Cambiar-Estado/:id', (req, res) => { res.send(`Cambiar estado del usuario con ID ${req.params.id}`); });
+router.get('/', getAllUsers);
+router.post('/', postUser);
+router.put('/Cambiar-Estado/:id', changeUserStatus);
 
 module.exports = router;

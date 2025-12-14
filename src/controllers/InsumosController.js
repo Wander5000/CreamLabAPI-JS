@@ -1,4 +1,4 @@
-const pool = require('../database.js');
+const pool = require('../config/database.js');
 
 const getAllInsumos = async (req, res) => {
   try {
@@ -36,7 +36,7 @@ const putInsumo = async (req, res) => {
     if (rowCount === 0) {
       return res.status(404).json({ message: 'Insumo no encontrado' });
     }
-    res.json({ message: 'Insumo actualizado exitosamente' });
+    res.status(204).json({ message: 'Insumo actualizado exitosamente' });
   } catch (error) {
     res.status(500).json({ message: 'Error al actualizar el insumo', error });
   }
@@ -52,7 +52,7 @@ const deleteInsumo = async (req, res) => {
     if (rowCount === 0) {
       return res.status(404).json({ message: 'Insumo no encontrado' });
     }
-    res.json({ message: 'Insumo eliminado exitosamente' });
+    res.status(204).json({ message: 'Insumo eliminado exitosamente' });
   }
   catch (error) {
     res.status(500).json({ message: 'Error al eliminar el insumo', error });

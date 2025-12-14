@@ -1,1 +1,4 @@
 node_modules
+VentasController.js
+PedidosController.js
+ProductosController.js
