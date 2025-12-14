@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const { getAllStates, postState, putState, deleteState } = require('../controllers/EstadosController.js');
 
-
-router.get('/', (req, res) => { res.send('Obtener todos los estados'); });
-router.post('/', (req, res) => { res.send('Crear un nuevo estado'); });
-router.put('/:id', (req, res) => { res.send(`Actualizar el estado con ID ${req.params.id}`); });
-router.delete('/:id', (req, res) => { res.send(`Eliminar el estado con ID ${req.params.id}`); });
+router.get('/', getAllStates);
+router.post('/', postState);
+router.put('/:id', putState);
+router.delete('/:id', deleteState);
 
 module.exports = router;
