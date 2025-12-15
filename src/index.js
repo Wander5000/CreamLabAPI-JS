@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const multer = require('multer');
 require('dotenv').config();
 
 //Llamado a las rutas
@@ -21,6 +22,7 @@ app.set('port', process.env.PORT || 3000);
 
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 app.use(cors());
 

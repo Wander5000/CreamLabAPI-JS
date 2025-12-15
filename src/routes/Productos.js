@@ -1,13 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { getAllProducts, getProductById } = require('../controllers/ProductosController.js');
+const upload = require('../config/multer.js');
+const { getAllProducts, getProductById, getValidProducts, getProductsByCategory, postProduct, putProduct, changeProductState, deleteProduct } = require('../controllers/ProductosController.js');
 
 router.get('/', getAllProducts);
 router.get('/:id', getProductById);
-router.get('/Validos', (req, res) => { res.send('Obtener productos Activos'); });
-router.get('/Categoria/:category', (req, res) => { res.send(`Obtener productos de la categoría ${req.params.category}`); });
-router.post('/', (req, res) => { res.send('Crear un nuevo producto'); });
-router.put('/:id', (req, res) => { res.send(`Actualizar el producto con ID ${req.params.id}`); });
-router.delete('/:id', (req, res) => { res.send(`Eliminar el producto con ID ${req.params.id}`); });
+router.get('/Validos', getValidProducts);
+router.get('/Categoria/:category', getProductsByCategory);
+router.post('/', upload.single('ImagenProducto'), postProduct);
+router.put('/:id', upload.single('ImagenProducto'), putProduct);
+router.put('/Cambiar-Estado/:id', changeProductState);
+router.delete('/:id', deleteProduct);
 
 module.exports = router;
