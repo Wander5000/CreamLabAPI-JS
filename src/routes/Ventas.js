@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const { getAllVentas, postVenta, putVenta } = require('../controllers/VentasController.js');
 
-
-router.get('/', (req, res) => { res.send('Obtener todas las ventas'); });
-router.post('/', (req, res) => { res.send('Crear una nueva venta'); });
-router.put('/:id', (req, res) => { res.send(`Actualizar la venta con ID ${req.params.id}`); });
+router.get('/', getAllVentas);
+router.post('/', postVenta);
+router.put('/:id', putVenta);
 
 module.exports = router;

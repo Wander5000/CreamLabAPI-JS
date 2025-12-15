@@ -26,6 +26,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 app.use(cors());
 
+app.use((req, res, next) => {
+  console.log('Body recibido:', req.body);
+  console.log('Body raw:', JSON.stringify(req.body));
+  next();
+});
+
 // Rutas
 app.get('/', (req, res) => { res.send('¡Bienvenido a la API de CreamLab!'); });
 app.use('/api/Auth', AuthRouter);

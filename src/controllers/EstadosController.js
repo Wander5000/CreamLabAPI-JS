@@ -14,7 +14,7 @@ const postState = async (req, res) => {
   try {
     const { rowCount } = await pool.query(
       'INSERT INTO "Estados" ("NombreEstado") VALUES ($1)',
-      [NombreEstado, Descripcion]
+      [NombreEstado]
     );
     if (rowCount === 0) {
       return res.status(400).json({ message: 'No se pudo crear el estado' });
