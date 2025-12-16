@@ -3,29 +3,73 @@ const cloudinary = require('../config/cloudinary.js');
 
 const getAllProducts = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM "Productos"');
+    const { rows } = await pool.query(`
+      SELECT 
+        p."IdProducto" as "idProducto",
+        p."NombreProducto" as "nombreProducto",
+        c."NombreCategoria" as "categoriaProducto",
+        p."PrecioUnidad" as "precioUnidad",
+        p."Stock" as "stock",
+        p."Descripcion" as "descripcion",
+        p."Imagen" as "imagen",
+        p."Estado" as "estado"
+      FROM "Productos" AS p
+      INNER JOIN "Categorias" AS c ON p."CategoriaProducto" = c."IdCategoria"
+      ORDER BY p."IdProducto"
+    `);
     res.json(rows);
-  }catch (error) {
-    res.status(500).json({ message: 'Error al obtener los productos', error });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener los productos', error: error.message });
   }
 };
 
 const getProductById = async (req, res) => {
   const { id } = req.params;
   try {
-    const { rows } = await pool.query('SELECT * FROM "Productos" WHERE "IdProducto" = $1', [id]);
+    const query = `
+      SELECT p."IdProducto" as "idProducto", 
+              p."NombreProducto" as "nombreProducto", 
+              c."NombreCategoria" as "categoriaProducto", 
+              p."PrecioUnidad" as "precioUnidad", 
+              p."Stock" as "stock", 
+              p."Descripcion" as "descripcion", 
+              p."Imagen" as "imagen", 
+              p."Estado" as "estado"
+      FROM "Productos" AS p
+      INNER JOIN "Categorias" AS c ON p."CategoriaProducto" = c."IdCategoria"
+      WHERE p."IdProducto" = $1
+      LIMIT 1
+    `;
+    
+    const { rows } = await pool.query(query, [id]);
+    
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Producto no encontrado u Inexistente' });
     }
+    
     res.json(rows[0]);
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener el producto', error });
+    res.status(500).json({ message: 'Error al obtener el producto', error: error.message });
   }
 };
 
 const getValidProducts = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM "Productos" WHERE "Estado" = true');
+    const { rows } = await pool.query(`
+      SELECT 
+        p."IdProducto" as "idProducto",
+        p."NombreProducto" as "nombreProducto",
+        c."NombreCategoria" as "categoriaProducto",
+        p."PrecioUnidad" as "precioUnidad",
+        p."Stock" as "stock",
+        p."Descripcion" as "descripcion",
+        p."Imagen" as "imagen",
+        p."Estado" as "estado"
+      FROM "Productos" AS p
+      INNER JOIN "Categorias" AS c ON p."CategoriaProducto" = c."IdCategoria"
+      WHERE p."Estado" = true
+      ORDER BY p."IdProducto"
+    `);
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los productos válidos', error });
@@ -35,7 +79,21 @@ const getValidProducts = async (req, res) => {
 const getProductsByCategory = async (req, res) => {
   const { category } = req.params;
   try {
-    const { rows } = await pool.query('SELECT * FROM "Productos" WHERE "CategoriaProducto" = $1', [category]);
+    const { rows } = await pool.query(
+      `SELECT p."IdProducto" as "idProducto", 
+              p."NombreProducto" as "nombreProducto", 
+              c."NombreCategoria" AS "categoriaProducto", 
+              p."PrecioUnidad" as "precioUnidad", 
+              p."Stock" as "stock", 
+              p."Descripcion" as "descripcion", 
+              p."Imagen" as "imagen", 
+              p."Estado" as "estado"
+      FROM "Productos" AS p
+      INNER JOIN "Categorias" AS c ON p."CategoriaProducto" = c."IdCategoria"
+      WHERE c."IdCategoria" = $1 AND p."Estado" = true
+      ORDER BY p."IdProducto"`,
+      [category]
+    );
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los productos por categoría', error });

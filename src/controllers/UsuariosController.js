@@ -1,12 +1,28 @@
 const pool = require('../config/database.js');
 const bcrypt = require('bcrypt');
 
+
 const getAllUsers = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT "IdUsuario", "NombreUsuario", "Correo", "TipoDocumento", "NumeroDocumento", "Direccion", "Rol", "Estado" FROM "Usuarios" WHERE "Rol" <> 1 ');
+    const { rows } = await pool.query(`
+      SELECT 
+        u."IdUsuario" AS "idUsuario",
+        u."NombreUsuario" AS "nombreUsuario",
+        u."Correo" AS "correo",
+        u."TipoDocumento" AS "tipoDocumento",
+        u."NumeroDocumento" AS "numeroDocumento",
+        u."Direccion" AS "direccion",
+        r."NombreRol" AS "rol",
+        u."Estado" AS "estado"
+      FROM "Usuarios" AS u
+      INNER JOIN "Roles" AS r ON u."Rol" = r."IdRol"
+      WHERE u."Rol" <> 1
+      ORDER BY u."IdUsuario"
+    `);
+    
     res.status(200).json(rows);
   } catch (error) {
-    console.error(error);
+    console.error('Error al obtener los usuarios:', error);
     res.status(500).json({ message: 'Error al obtener los usuarios' });
   }
 };

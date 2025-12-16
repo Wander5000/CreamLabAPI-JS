@@ -3,11 +3,27 @@ const bcrypt = require('bcrypt');
 
 const getAllClients = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT "IdUsuario", "NombreUsuario", "Correo", "TipoDocumento", "NumeroDocumento", "Direccion", "Estado" FROM "Usuarios" WHERE "Rol" = 1 ');
+    const { rows } = await pool.query(`
+      SELECT 
+        u."IdUsuario" AS "idUsuario",
+        u."NombreUsuario" AS "nombreUsuario",
+        u."Correo" AS "correo",
+        u."TipoDocumento" AS "tipoDocumento",
+        u."NumeroDocumento" AS "numeroDocumento",
+        u."Direccion" AS "direccion",
+        u."Estado" AS "estado"
+      FROM "Usuarios" AS u
+      WHERE u."Rol" = 1
+      ORDER BY u."IdUsuario"
+    `);
+    
     res.status(200).json(rows);
-  }catch(error){
-    console.error(error);
-    res.status(500).json({ message: 'Error al obtener los clientes' });
+  } catch(error) {
+    console.error('Error al obtener clientes:', error);
+    res.status(500).json({ 
+      message: 'Error al obtener los clientes',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 

@@ -2,8 +2,84 @@ const pool = require('../config/database.js');
 
 const getAllPedidos = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM "Ventas" WHERE ("Estado" <> 1 AND "Estado" <> 4 AND "Estado" <> 5) ');
-    res.status(200).json(rows);
+    const { rows } = await pool.query(`
+      SELECT 
+        v."IdVenta", 
+        u."NombreUsuario", 
+        v."Fecha", 
+        v."MetodoPago", 
+        v."Descuento", 
+        v."Total", 
+        v."Observaciones", 
+        e."NombreEstado", 
+        u."IdUsuario", 
+        e."IdEstado", 
+        t."IdDetalle", 
+        t."Producto", 
+        t."Cantidad", 
+        t."PrecioUnitario", 
+        t."Subtotal", 
+        t."IdProducto"
+      FROM "Ventas" AS v
+      INNER JOIN "Usuarios" AS u 
+        ON v."Usuario" = u."IdUsuario"
+      INNER JOIN "Estados" AS e 
+        ON v."Estado" = e."IdEstado"
+      LEFT JOIN (
+        SELECT 
+          d."IdDetalle", 
+          p."NombreProducto" AS "Producto", 
+          d."Cantidad", 
+          d."PrecioUnidad" AS "PrecioUnitario", 
+          d."Subtotal", 
+          p."IdProducto", 
+          d."Venta"
+        FROM "DetallesVenta" AS d
+        INNER JOIN "Productos" AS p 
+          ON d."Producto" = p."IdProducto"
+      ) AS t 
+        ON v."IdVenta" = t."Venta"
+      WHERE v."Estado" NOT IN (4, 5, 1)
+      ORDER BY v."IdVenta", t."IdDetalle"
+    `);
+
+    // Agrupar los resultados
+    const ventasMap = new Map();
+
+    rows.forEach(row => {
+      const idVenta = row.IdVenta;
+      
+      // Si la venta no existe en el Map, la creamos
+      if (!ventasMap.has(idVenta)) {
+        ventasMap.set(idVenta, {
+          idVenta: row.IdVenta,
+          usuario: row.NombreUsuario,
+          fecha: row.Fecha,
+          metodoPago: row.MetodoPago,
+          descuento: row.Descuento,
+          total: row.Total,
+          observaciones: row.Observaciones,
+          estado: row.NombreEstado,
+          detalles: []
+        });
+      }
+      
+      // Agregar el detalle si existe
+      if (row.IdDetalle) {
+        ventasMap.get(idVenta).detalles.push({
+          idDetalle: row.IdDetalle,
+          producto: row.Producto,
+          cantidad: row.Cantidad,
+          precioUnitario: row.PrecioUnitario,
+          subtotal: row.Subtotal
+        });
+      }
+    });
+
+    // Convertir el Map a array
+    const pedidos = Array.from(ventasMap.values());
+
+    res.status(200).json(pedidos);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al obtener los pedidos' });
@@ -13,28 +89,81 @@ const getAllPedidos = async (req, res) => {
 const getPedidoById = async (req, res) => {
   const { id } = req.params;
   try {
-    const { rows } = await pool.query('SELECT * FROM "Ventas" WHERE "IdVenta" = $1', [id]);
+    const { rows } = await pool.query(`
+      SELECT 
+        v."IdVenta", 
+        u."NombreUsuario", 
+        v."Fecha", 
+        v."MetodoPago", 
+        v."Descuento", 
+        v."Total", 
+        v."Observaciones", 
+        e."NombreEstado", 
+        u."IdUsuario", 
+        e."IdEstado", 
+        t."IdDetalle", 
+        t."Producto", 
+        t."Cantidad", 
+        t."PrecioUnitario", 
+        t."Subtotal", 
+        t."IdProducto"
+      FROM "Ventas" AS v
+      INNER JOIN "Usuarios" AS u 
+        ON v."Usuario" = u."IdUsuario"
+      INNER JOIN "Estados" AS e 
+        ON v."Estado" = e."IdEstado"
+      LEFT JOIN (
+        SELECT 
+          d."IdDetalle", 
+          p."NombreProducto" AS "Producto", 
+          d."Cantidad", 
+          d."PrecioUnidad" AS "PrecioUnitario", 
+          d."Subtotal", 
+          p."IdProducto", 
+          d."Venta"
+        FROM "DetallesVenta" AS d
+        INNER JOIN "Productos" AS p 
+          ON d."Producto" = p."IdProducto"
+      ) AS t 
+        ON v."IdVenta" = t."Venta"
+      WHERE v."IdVenta" = $1
+      ORDER BY t."IdDetalle"
+    `, [id]);
+
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Pedido no encontrado' });
     }
-    res.status(200).json(rows[0]);
+
+    // Agrupar el resultado (solo habrá una venta)
+    const pedido = {
+      idVenta: rows[0].IdVenta,
+      usuario: rows[0].NombreUsuario,
+      fecha: rows[0].Fecha,
+      metodoPago: rows[0].MetodoPago,
+      descuento: rows[0].Descuento,
+      total: rows[0].Total,
+      observaciones: rows[0].Observaciones,
+      estado: rows[0].NombreEstado,
+      detalles: []
+    };
+
+    // Agregar todos los detalles
+    rows.forEach(row => {
+      if (row.IdDetalle) {
+        pedido.detalles.push({
+          idDetalle: row.IdDetalle,
+          producto: row.Producto,
+          cantidad: row.Cantidad,
+          precioUnitario: row.PrecioUnitario,
+          subtotal: row.Subtotal
+        });
+      }
+    });
+
+    res.status(200).json(pedido);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al obtener el pedido' });
-  }
-};
-
-const getPedidosByClientId = async (req, res) => {
-  const { clientId } = req.params;
-  try {
-    const { rows } = await pool.query('SELECT * FROM "Ventas" WHERE "IdCliente" = $1', [clientId]);
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'No se encontraron pedidos para este cliente' });
-    }
-    res.status(200).json(rows);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error al obtener los pedidos del cliente' });
   }
 };
 
@@ -138,4 +267,4 @@ const anularPedido = async (req, res) => {
   }
 };
 
-module.exports = { getAllPedidos, getPedidoById, getPedidosByClientId, postPedido, putPedido, anularPedido };
+module.exports = { getAllPedidos, getPedidoById, postPedido, putPedido, anularPedido };

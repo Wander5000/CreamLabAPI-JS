@@ -2,7 +2,14 @@ const pool = require('../config/database.js');
 
 const getAllCategories = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM "Categorias"');
+    const { rows } = await pool.query(`
+      SELECT 
+        c."IdCategoria" AS "idCategoria", 
+        c."NombreCategoria" AS "nombreCategoria", 
+        c."Descripcion" AS "descripcion"
+      FROM "Categorias" AS c
+      ORDER BY c."IdCategoria"
+    `);
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener las categorías', error });

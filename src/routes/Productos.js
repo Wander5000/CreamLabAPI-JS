@@ -4,8 +4,8 @@ const upload = require('../config/multer.js');
 const { getAllProducts, getProductById, getValidProducts, getProductsByCategory, postProduct, putProduct, changeProductState, deleteProduct } = require('../controllers/ProductosController.js');
 
 router.get('/', getAllProducts);
-router.get('/:id', getProductById);
 router.get('/Validos', getValidProducts);
+router.get('/:id', getProductById);
 router.get('/Categoria/:category', getProductsByCategory);
 router.post('/', upload.single('ImagenProducto'), postProduct);
 router.put('/:id', upload.single('ImagenProducto'), putProduct);
