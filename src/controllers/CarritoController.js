@@ -192,4 +192,214 @@ const agregarProducto = async (req, res) => {
   }
 }
 
-module.exports = { getCarrito , agregarProducto };
+const actualizarCantidad = async (req, res) => {
+  const { idUsuario } = req.user;
+  const { idProducto, nuevaCantidad } = req.query;
+  const client = await pool.connect();
+  
+  try {
+    const nuevaCantidadNum = parseInt(nuevaCantidad);
+    if (isNaN(nuevaCantidadNum) || nuevaCantidadNum <= 0) {
+      return res.status(400).json({ message: 'Cantidad inválida' });
+    }
+
+    // Iniciar transacción
+    await client.query('BEGIN');
+
+    const carrito = await client.query(
+      'SELECT * FROM "Ventas" WHERE "Usuario" = $1 AND "Estado" = 1',
+      [idUsuario]
+    );
+
+    if (!carrito.rows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ message: 'Carrito no encontrado' });
+    }
+
+    const detalle = await client.query(
+      'SELECT * FROM "DetallesVenta" WHERE "Venta" = $1 AND "Producto" = $2',
+      [carrito.rows[0].IdVenta, idProducto]
+    );
+
+    if (!detalle.rows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ message: 'Producto no encontrado en el carrito' });
+    }
+
+    const producto = await client.query(
+      'SELECT * FROM "Productos" WHERE "IdProducto" = $1',
+      [idProducto]
+    );
+
+    if (!producto.rows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+
+    if (producto.rows[0].Stock < nuevaCantidadNum) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ message: 'Stock insuficiente' });
+    }
+
+    const nuevoSubtotal = nuevaCantidadNum * detalle.rows[0].PrecioUnidad;
+    const diferenciaTotal = nuevoSubtotal - detalle.rows[0].Subtotal;
+
+    // Actualizar detalle
+    await client.query(
+      'UPDATE "DetallesVenta" SET "Cantidad" = $1, "Subtotal" = $2 WHERE "IdDetalle" = $3',
+      [nuevaCantidadNum, nuevoSubtotal, detalle.rows[0].IdDetalle]
+    );
+
+    // Actualizar total
+    await client.query(
+      'UPDATE "Ventas" SET "Total" = "Total" + $1 WHERE "IdVenta" = $2',
+      [diferenciaTotal, carrito.rows[0].IdVenta]
+    );
+
+    await client.query('COMMIT');
+
+    res.status(200).json({
+      message: 'Cantidad actualizada exitosamente',
+      detalle: {
+        cantidad: nuevaCantidadNum,
+        subtotal: nuevoSubtotal
+      }
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error al actualizar cantidad:', error);
+    res.status(500).json({ 
+      message: 'Error al actualizar la cantidad del producto en el carrito', 
+      error: error.message 
+    });
+  } finally {
+    client.release(); // Siempre liberar la conexión
+  }
+};
+
+const quitarProducto = async (req, res) => {
+  const { idUsuario } = req.user;
+  const { idProducto } = req.query;
+  const client = await pool.connect(); // Obtener cliente para transacción
+  try {
+    await client.query('BEGIN'); // Iniciar transacción
+    
+    let carrito = await client.query(
+      'SELECT * FROM "Ventas" WHERE "Usuario" = $1 AND "Estado" = 1',
+      [idUsuario]
+    );
+    let detalle = await client.query(
+      'SELECT * FROM "DetallesVenta" WHERE "Venta" = $1 AND "Producto" = $2',
+      [carrito.rows[0].IdVenta, idProducto]
+    );
+    if (!detalle.rows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ message: 'Producto no encontrado en el carrito' });
+    }
+    const diferenciaTotal = -detalle.rows[0].Subtotal;
+    // Eliminar detalle
+    await client.query(
+      'DELETE FROM "DetallesVenta" WHERE "IdDetalle" = $1',
+      [detalle.rows[0].IdDetalle]
+    );
+    // Actualizar total con la diferencia
+    await client.query(
+      'UPDATE "Ventas" SET "Total" = "Total" + $1 WHERE "IdVenta" = $2',
+      [diferenciaTotal, carrito.rows[0].IdVenta]
+    );
+    // Confirmar transacción
+    await client.query('COMMIT');
+    res.status(200).json({
+      message: 'Producto quitado del carrito exitosamente',
+      detalle: detalle.rows[0]
+    });
+  } catch (error) {
+    await client.query('ROLLBACK'); // Revertir en caso de error
+    console.error('Error al quitar producto:', error);
+    res.status(500).json({ message: 'Error al quitar el producto del carrito', error: error.message });
+  } finally {
+    client.release(); // Liberar conexión
+  }
+}
+
+const confirmarPedido = async (req, res) => {
+  const { idUsuario } = req.user;
+  const { mPago } = req.query;
+  
+  if (!mPago) {
+    return res.status(400).json({ message: 'Método de pago requerido' });
+  }
+  
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    let carrito = await client.query(
+      'SELECT * FROM "Ventas" WHERE "Usuario" = $1 AND "Estado" = 1',
+      [idUsuario]
+    );
+    
+    if (!carrito.rows[0]) {  // CORREGIDO
+      await client.query('ROLLBACK');
+      return res.status(404).json({ message: 'Carrito no encontrado' });
+    }
+    
+    const detalles = await client.query(
+      'SELECT * FROM "DetallesVenta" WHERE "Venta" = $1',
+      [carrito.rows[0].IdVenta]
+    );
+    
+    if (detalles.rows.length === 0) {  // VALIDACIÓN ADICIONAL
+      await client.query('ROLLBACK');
+      return res.status(400).json({ message: 'El carrito está vacío' });
+    }
+
+    for (const detalle of detalles.rows) {
+      const producto = await client.query(
+        'SELECT * FROM "Productos" WHERE "IdProducto" = $1 FOR UPDATE',  // Bloqueo optimista
+        [detalle.Producto]
+      );
+      
+      if (!producto.rows[0]) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ message: 'Producto no encontrado' });
+      }
+      
+      if (producto.rows[0].Stock < detalle.Cantidad) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ 
+          message: `Stock insuficiente para el producto ${producto.rows[0].Nombre}` 
+        });
+      }
+      
+      await client.query(
+        'UPDATE "Productos" SET "Stock" = "Stock" - $1 WHERE "IdProducto" = $2',
+        [detalle.Cantidad, detalle.Producto]
+      );
+    }
+    
+    await client.query(
+      'UPDATE "Ventas" SET "Estado" = 2, "MetodoPago" = $1 WHERE "IdVenta" = $2',
+      [mPago, carrito.rows[0].IdVenta]
+    );
+    
+    await client.query('COMMIT');
+    
+    res.status(200).json({
+      message: 'Pedido confirmado exitosamente',
+      venta: carrito.rows[0]
+    });
+    
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error al confirmar pedido:', error);
+    res.status(500).json({ 
+      message: 'Error al confirmar el pedido', 
+      error: error.message 
+    });
+  } finally {
+    client.release();
+  }
+}
+
+module.exports = { getCarrito , agregarProducto, actualizarCantidad, quitarProducto, confirmarPedido };
