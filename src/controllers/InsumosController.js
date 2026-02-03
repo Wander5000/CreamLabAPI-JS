@@ -2,7 +2,16 @@ const pool = require('../config/database.js');
 
 const getAllInsumos = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM "Insumos"');
+    const { rows } = await pool.query(`SELECT i."IdInsumo" AS "idInsumo", 
+      i."NombreInsumo" AS "nombreInsumo",
+      i."CategoriaInsumo" AS "idCategoriaInsumo", 
+      c."NombreCatInsumo" AS "categoriaInsumo",
+      i."UnidadMedida" AS "unidadMedida", 
+      i."Stock" AS "stock" 
+      FROM "Insumos" AS i
+      INNER JOIN "CategoriasInsumo" AS c
+        ON i."CategoriaInsumo" = c."IdCatInsumo"
+      ORDER BY i."IdInsumo"`);
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los insumos', error });

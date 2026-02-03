@@ -103,7 +103,33 @@ const getProductsByCategory = async (req, res) => {
 const postProduct = async (req, res) => {
   const { NombreProducto, Descripcion, CategoriaProducto, PrecioUnidad, Stock } = req.body;
   let ImagenProducto = { Url: null, PublicID: null };
+  
   try {
+    // Parsear Insumos si viene como string (común en multipart/form-data)
+    let Insumos = [];
+    if (req.body.Insumos) {
+      try {
+        Insumos = typeof req.body.Insumos === 'string' 
+          ? JSON.parse(req.body.Insumos) 
+          : req.body.Insumos;
+        
+        console.log('Insumos parseados:', Insumos);
+      } catch (parseError) {
+        console.error('Error al parsear Insumos:', parseError);
+        return res.status(400).json({ message: 'Insumos debe ser un JSON válido' });
+      }
+    }
+
+    // Validar que Insumos sea un array
+    if (!Array.isArray(Insumos)) {
+      return res.status(400).json({ 
+        message: 'Insumos debe ser un array',
+        recibido: typeof Insumos,
+        valor: Insumos
+      });
+    }
+
+    // Subir imagen a Cloudinary si existe
     if(req.file){
       const b64 = Buffer.from(req.file.buffer).toString('base64');
       const dataURI = `data:${req.file.mimetype};base64,${b64}`;
@@ -114,21 +140,60 @@ const postProduct = async (req, res) => {
       });
       ImagenProducto = { Url: result.secure_url, PublicID: result.public_id };
     }
-    const query = `
+
+    // Iniciar transacción
+    await pool.query('BEGIN');
+
+    // Insertar producto
+    const queryProducto = `
       INSERT INTO "Productos" 
       ("NombreProducto", "Descripcion", "CategoriaProducto", "PrecioUnidad", "Stock", "Imagen", "PublicID", "Estado")
       VALUES ($1, $2, $3, $4, $5, $6, $7, true)
       RETURNING *
     `;
-    const values = [ NombreProducto, Descripcion, CategoriaProducto, PrecioUnidad, Stock, ImagenProducto.Url, ImagenProducto.PublicID];
-    const queryResult = await pool.query(query, values);
-    res.status(201).json({ message: 'Producto creado exitosamente', producto: queryResult.rows[0] });
+    
+    const valuesProducto = [ 
+      NombreProducto, 
+      Descripcion, 
+      CategoriaProducto, 
+      PrecioUnidad, 
+      Stock, 
+      ImagenProducto.Url, 
+      ImagenProducto.PublicID
+    ];
+    
+    const resultProducto = await pool.query(queryProducto, valuesProducto);
+    const productoId = resultProducto.rows[0].IdProducto;
+
+    // Insertar insumos si existen
+    if (Insumos.length > 0) {
+      const queryInsumo = `
+        INSERT INTO "Recetas" 
+        ("Producto", "Insumo", "Cantidad")
+        VALUES ($1, $2, $3)
+      `;
+      
+      for (const insumo of Insumos) {
+        await pool.query(queryInsumo, [productoId, insumo.Insumo, insumo.Cantidad]);
+      }
+    }
+
+    // Confirmar transacción
+    await pool.query('COMMIT');
+    
+    res.status(201).json({ 
+      message: 'Producto creado exitosamente', 
+      producto: resultProducto.rows[0] 
+    });
+    
   } catch (error) {
+    await pool.query('ROLLBACK');
     if (ImagenProducto.PublicID && req.file) {
-      await cloudinary.uploader.destroy(ImagenProducto.PublicID).catch(err => console.log('Error al eliminar la imagen de Cloudinary:', err));
+      await cloudinary.uploader.destroy(ImagenProducto.PublicID)
+        .catch(err => console.log('Error al eliminar la imagen de Cloudinary:', err));
     }
     console.error('Error al insertar el producto en la base de datos:', error);
-    res.status(500).json({ message: 'Error al crear el producto', error });
+    res.status(500).json({ message: 'Error al crear el producto', error: error.message });
   }
 };
 

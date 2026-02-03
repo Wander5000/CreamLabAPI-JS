@@ -2,7 +2,7 @@ const pool = require('../config/database.js');
 
 const getAllStates = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM "Estados"');
+    const { rows } = await pool.query('SELECT e."IdEstado" AS "idEstado", e."NombreEstado" AS "nombreEstado" FROM "Estados" AS e ORDER BY e."IdEstado"');
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los estados', error });

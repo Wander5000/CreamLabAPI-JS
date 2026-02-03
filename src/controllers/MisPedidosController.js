@@ -45,15 +45,7 @@ const getPedidosByUser = async (req, res) => {
         AND v."Usuario" = $1
       ORDER BY v."IdVenta" DESC, t."IdDetalle"
     `, [idUsuario]);
-
     console.log(rows);
-
-    if (rows.length === 0) {
-      return res.status(404).json({ 
-        message: 'No se encontraron pedidos para este cliente' 
-      });
-    }
-
     // Agrupar los resultados por venta
     const ventasMap = new Map();
 
@@ -205,6 +197,12 @@ const anularPedido = async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Pedido no encontrado' });
     }
+    await pool.query(`
+      UPDATE "Productos" AS p
+      SET "Stock" = p."Stock" + d."Cantidad"
+      FROM "DetallesVenta" AS d
+      WHERE d."Venta" = $1 AND d."Producto" = p."IdProducto"
+    `, [id]);
     res.status(200).json({ message: 'Pedido anulado exitosamente' });
   } catch (error) {
     console.error('Error al anular el pedido:', error);

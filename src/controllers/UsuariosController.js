@@ -45,6 +45,24 @@ const postUser = async (req, res) => {
   }
 };
 
+const updateUser = async (req, res) => {
+  const { id } = req.params;
+  const { NombreUsuario, Correo, TipoDocumento, NumeroDocumento, Direccion, Rol } = req.body;
+  try {
+    const { rowCount } = await pool.query(
+      'UPDATE "Usuarios" SET "NombreUsuario" = $1, "Correo" = $2, "TipoDocumento" = $3, "NumeroDocumento" = $4, "Direccion" = $5, "Rol" = $6 WHERE "IdUsuario" = $7',
+      [NombreUsuario, Correo, TipoDocumento, NumeroDocumento, Direccion, Rol, id]
+    );
+    if (rowCount === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado o no actualizado' });
+    }
+    res.status(200).json({ message: 'Usuario actualizado exitosamente' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al actualizar el usuario' });
+  }
+};
+
 const changeUserStatus = async (req, res) => {
   const { id } = req.params;
   try {
@@ -63,4 +81,4 @@ const changeUserStatus = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, postUser, changeUserStatus };
+module.exports = { getAllUsers, postUser, updateUser,changeUserStatus };

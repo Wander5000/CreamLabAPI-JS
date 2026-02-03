@@ -260,6 +260,11 @@ const anularPedido = async (req, res) => {
   try {
     await pool.query('UPDATE "Ventas" SET "Estado" = $1 WHERE "IdVenta" = $2',
       [3, id]);
+    await pool.query(`
+      UPDATE "Productos" AS p
+      SET "Stock" = p."Stock" + d."Cantidad"
+      FROM "DetallesVenta" AS d
+      WHERE d."Venta" = $1 AND d."Producto" = p."IdProducto"`, [id]);
     res.status(200).json({ message: 'Pedido anulado exitosamente' });
   } catch (error) {
     console.error(error);
