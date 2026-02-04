@@ -27,27 +27,62 @@ const getProductById = async (req, res) => {
   const { id } = req.params;
   try {
     const query = `
-      SELECT p."IdProducto" as "idProducto", 
-              p."NombreProducto" as "nombreProducto", 
-              c."NombreCategoria" as "categoriaProducto", 
-              p."PrecioUnidad" as "precioUnidad", 
-              p."Stock" as "stock", 
-              p."Descripcion" as "descripcion", 
-              p."Imagen" as "imagen", 
-              p."Estado" as "estado"
-      FROM "Productos" AS p
-      INNER JOIN "Categorias" AS c ON p."CategoriaProducto" = c."IdCategoria"
-      WHERE p."IdProducto" = $1
-      LIMIT 1
+      SELECT 
+    p."IdProducto" as "idProducto",
+    p."NombreProducto" as "nombreProducto",
+    c."NombreCategoria" as "categoriaProducto",
+    p."PrecioUnidad" as "precioUnidad",
+    p."Stock" as "stock",
+    p."Descripcion" as "descripcion",
+    p."Imagen" as "imagen",
+    p."Estado" as "estado",
+    pi."IdProIns",
+    ci."NombreCatInsumo",
+    pi."Minimo",
+    pi."Maximo",
+    pi."Obligatorio"
+FROM "Productos" AS p
+INNER JOIN "Categorias" AS c 
+    ON p."CategoriaProducto" = c."IdCategoria"
+LEFT JOIN "ProductoInsumo" AS pi 
+    ON p."IdProducto" = pi."Producto"
+LEFT JOIN "CategoriasInsumo" AS ci 
+    ON pi."CategoriaInsumo" = ci."IdCatInsumo"
+WHERE p."IdProducto" = $1
     `;
-    
     const { rows } = await pool.query(query, [id]);
-    
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Producto no encontrado u Inexistente' });
     }
-    
-    res.json(rows[0]);
+
+    const productoMap = new Map();
+    rows.forEach(row => {
+      const prodId = row.idProducto;
+      if (!productoMap.has(prodId)) {
+        productoMap.set(prodId, {
+          idProducto: row.idProducto,
+          nombreProducto: row.nombreProducto,
+          categoriaProducto: row.categoriaProducto,
+          precioUnidad: row.precioUnidad,
+          stock: row.stock,
+          descripcion: row.descripcion,
+          imagen: row.imagen,
+          estado: row.estado,
+          catinsumos: []
+        });
+      }
+
+      if (row.NombreCatInsumo) {
+        productoMap.get(prodId).catinsumos.push({
+          nombreCatInsumo: row.NombreCatInsumo,
+          minimo: row.Minimo,
+          maximo: row.Maximo,
+          obligatorio: row.Obligatorio
+        });
+      }
+    })
+    const productosArray = Array.from(productoMap.values());
+    res.json(productosArray[0]);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener el producto', error: error.message });
   }
@@ -106,26 +141,25 @@ const postProduct = async (req, res) => {
   
   try {
     // Parsear Insumos si viene como string (común en multipart/form-data)
-    let Insumos = [];
-    if (req.body.Insumos) {
+    let CatInsumos = [];
+    if (req.body.CatInsumos) {
       try {
-        Insumos = typeof req.body.Insumos === 'string' 
-          ? JSON.parse(req.body.Insumos) 
-          : req.body.Insumos;
+        CatInsumos = typeof req.body.CatInsumos === 'string' 
+          ? JSON.parse(req.body.CatInsumos) 
+          : req.body.CatInsumos;
         
-        console.log('Insumos parseados:', Insumos);
+        console.log('Categorias parseadas:', CatInsumos);
       } catch (parseError) {
-        console.error('Error al parsear Insumos:', parseError);
-        return res.status(400).json({ message: 'Insumos debe ser un JSON válido' });
+        console.error('Error al parsear CatInsumos:', parseError);
+        return res.status(400).json({ message: 'CatInsumos debe ser un JSON válido' });
       }
     }
-
-    // Validar que Insumos sea un array
-    if (!Array.isArray(Insumos)) {
+    // Validar que CatInsumos sea un array
+    if (!Array.isArray(CatInsumos)) {
       return res.status(400).json({ 
-        message: 'Insumos debe ser un array',
-        recibido: typeof Insumos,
-        valor: Insumos
+        message: 'CatInsumos debe ser un array',
+        recibido: typeof CatInsumos,
+        valor: CatInsumos
       });
     }
 
@@ -166,15 +200,15 @@ const postProduct = async (req, res) => {
     const productoId = resultProducto.rows[0].IdProducto;
 
     // Insertar insumos si existen
-    if (Insumos.length > 0) {
+    if (CatInsumos.length > 0) {
       const queryInsumo = `
-        INSERT INTO "Recetas" 
-        ("Producto", "Insumo", "Cantidad")
-        VALUES ($1, $2, $3)
+        INSERT INTO "ProductoInsumo" 
+        ("Producto", "CategoriaInsumo", "Minimo", "Maximo", "Obligatorio")
+        VALUES ($1, $2, $3, $4, $5)
       `;
       
-      for (const insumo of Insumos) {
-        await pool.query(queryInsumo, [productoId, insumo.Insumo, insumo.Cantidad]);
+      for (const catinsumo of CatInsumos) {
+        await pool.query(queryInsumo, [productoId, catinsumo.CategoriaInsumo, catinsumo.Minimo, catinsumo.Maximo, catinsumo.Obligatorio]);
       }
     }
 

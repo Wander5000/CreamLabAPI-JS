@@ -118,7 +118,6 @@ const agregarProducto = async (req, res) => {
       'SELECT * FROM "Ventas" WHERE "Usuario" = $1 AND "Estado" = 1',
       [idUsuario]
     );
-    
     if (!carrito.rows[0]) {
       const crearCarro = await client.query(
         'INSERT INTO "Ventas" ("Usuario", "Fecha", "MetodoPago", "Descuento", "Total", "Observaciones", "Estado") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *', 
