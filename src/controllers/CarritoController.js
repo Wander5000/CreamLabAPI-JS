@@ -3,7 +3,6 @@ const pool = require('../config/database.js');
 const getCarrito = async (req, res) => {
   const { idUsuario } = req.user;
   try {
-    // Consulta con JOIN para obtener venta y detalles
     const { rows } = await pool.query(
       `SELECT 
         t."IdVenta", 
@@ -19,7 +18,10 @@ const getCarrito = async (req, res) => {
         d."PrecioUnidad", 
         d."Producto", 
         d."Subtotal", 
-        d."Venta"
+        d."Venta",
+        i."IdInsumo",
+        i."NombreInsumo",
+        di."Cantidad" AS "CantidadInsumo"
       FROM (
         SELECT 
           v."IdVenta", 
@@ -35,13 +37,40 @@ const getCarrito = async (req, res) => {
         LIMIT 1
       ) AS t
       LEFT JOIN "DetallesVenta" AS d ON t."IdVenta" = d."Venta"
-      ORDER BY t."IdVenta"`,
+      LEFT JOIN "DetallesInsumo" AS di ON d."IdDetalle" = di."Detalle"
+      LEFT JOIN "Insumos" AS i ON di."Insumo" = i."IdInsumo"
+      ORDER BY d."IdDetalle", i."IdInsumo"`,
       [idUsuario]
     );
 
-    // Si existe una venta (carrito)
     if (rows.length > 0) {
-      // Transformar los datos al formato requerido
+      const detallesMap = new Map();
+      
+      rows.forEach(row => {
+        if (row.IdDetalle) {
+          if (!detallesMap.has(row.IdDetalle)) {
+            detallesMap.set(row.IdDetalle, {
+              idDetalle: row.IdDetalle,
+              producto: row.Producto,
+              cantidad: row.Cantidad,
+              precioUnitario: row.PrecioUnidad,
+              subtotal: row.Subtotal,
+              insumos: []
+            });
+          }
+          
+          if (row.IdInsumo) {
+            detallesMap.get(row.IdDetalle).insumos.push({
+              idInsumo: row.IdInsumo,
+              nombreInsumo: row.NombreInsumo,
+              cantidad: row.CantidadInsumo || 1
+            });
+          }
+        }
+      });
+
+      const detalles = Array.from(detallesMap.values());
+
       const carrito = {
         idVenta: rows[0].IdVenta,
         usuario: rows[0].Usuario,
@@ -49,28 +78,19 @@ const getCarrito = async (req, res) => {
         metodoPago: rows[0].MetodoPago,
         descuento: rows[0].Descuento,
         total: rows[0].Total,
-        detalles: rows[0].IdDetalle 
-          ? rows.map(row => ({
-              idDetalle: row.IdDetalle,
-              producto: row.Producto,
-              cantidad: row.Cantidad,
-              precioUnitario: row.PrecioUnidad,
-              subtotal: row.Subtotal
-            }))
-          : []
+        observaciones: rows[0].Observaciones,
+        detalles: detalles
       };
       
       return res.json(carrito);
     }
 
-    // Si no existe, crear un nuevo carrito
     const fecha = new Date();
     const crearCarro = await pool.query(
       'INSERT INTO "Ventas" ("Usuario", "Fecha", "MetodoPago", "Descuento", "Total", "Observaciones", "Estado") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
       [idUsuario, fecha, 'N/A', 0, 0, null, 1]
     );
 
-    // Retornar el carrito nuevo con detalles vacíos
     const nuevoCarrito = {
       idVenta: crearCarro.rows[0].IdVenta,
       usuario: crearCarro.rows[0].Usuario,
@@ -90,12 +110,12 @@ const getCarrito = async (req, res) => {
 
 const agregarProducto = async (req, res) => {
   const { idUsuario } = req.user;
-  const { idProducto, cantidad } = req.query;
+  const { idProducto, cantidad, insumos } = req.query;
   
-  const client = await pool.connect(); // Obtener cliente para transacción
+  const client = await pool.connect();
   
   try {
-    await client.query('BEGIN'); // Iniciar transacción
+    await client.query('BEGIN');
     
     const cantidadNum = parseInt(cantidad);
     if (isNaN(cantidadNum) || cantidadNum <= 0) {
@@ -113,6 +133,82 @@ const agregarProducto = async (req, res) => {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
 
+    // ============ PARSEAR Y AGRUPAR INSUMOS ============
+    let insumosList = [];
+    let insumosAgrupados = {}; // { idInsumo: cantidad }
+    
+    if (insumos) {
+      try {
+        insumosList = typeof insumos === 'string' ? JSON.parse(insumos) : insumos;
+        
+        // Agrupar IDs repetidos y contar cantidades
+        insumosAgrupados = insumosList.reduce((acc, insumoId) => {
+          acc[insumoId] = (acc[insumoId] || 0) + 1;
+          return acc;
+        }, {});
+        
+        // Mantener lista ordenada para comparación
+        insumosList.sort((a, b) => a - b);
+      } catch (e) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ message: 'Insumos inválidos' });
+      }
+    }
+
+    // ============ CALCULAR PRECIO EXTRA DE INSUMOS ============
+    let precioExtra = 0;
+    
+    if (insumosList.length > 0) {
+      // Obtener relaciones producto-categoría-insumo con reglas
+      const relacionProductoInsumos = await client.query(`
+        SELECT DISTINCT
+          pi."CategoriaInsumo" as "IdCategoriaInsumo",
+          pi."Minimo",
+          pi."Maximo"
+        FROM "ProductoInsumo" pi
+        WHERE pi."Producto" = $1
+      `, [idProducto]);
+
+      // Para cada categoría, calcular extras
+      for (const relacion of relacionProductoInsumos.rows) {
+        const insumosCategoria = await client.query(`
+          SELECT 
+            i."IdInsumo",
+            i."PrecioUnidad"
+          FROM "Insumos" i
+          WHERE i."CategoriaInsumo" = $1
+            AND i."IdInsumo" = ANY($2::int[])
+          ORDER BY i."IdInsumo"
+        `, [relacion.IdCategoriaInsumo, insumosList]);
+
+        const maximo = parseInt(relacion.Maximo) || 0;
+        
+        // Contar total seleccionados considerando cantidades
+        let totalSeleccionados = 0;
+        const insumosConCantidad = [];
+        
+        for (const ins of insumosCategoria.rows) {
+          const cantidadInsumo = insumosAgrupados[ins.IdInsumo] || 0;
+          totalSeleccionados += cantidadInsumo;
+          
+          // Agregar cada insumo tantas veces como su cantidad
+          for (let i = 0; i < cantidadInsumo; i++) {
+            insumosConCantidad.push(ins);
+          }
+        }
+
+        // Si excede el máximo, cobrar los extras
+        if (totalSeleccionados > maximo) {
+          const extras = insumosConCantidad.slice(maximo);
+          for (const ins of extras) {
+            const precio = parseFloat(ins.PrecioUnidad) || 0;
+            precioExtra += precio;
+          }
+        }
+      }
+    }
+    // ============ FIN CÁLCULO PRECIO EXTRA ============
+
     // Obtener o crear carrito
     let carrito = await client.query(
       'SELECT * FROM "Ventas" WHERE "Usuario" = $1 AND "Estado" = 1',
@@ -126,47 +222,73 @@ const agregarProducto = async (req, res) => {
       carrito = crearCarro;
     }
 
-    const yaExiste = await client.query(
+    const detalles = await client.query(
       'SELECT * FROM "DetallesVenta" WHERE "Venta" = $1 AND "Producto" = $2',
       [carrito.rows[0].IdVenta, idProducto]
     );
 
+    let yaExiste = null;
+    for (const detalle of detalles.rows) {
+      const insumoDetalle = await client.query(
+        'SELECT "Insumo" FROM "DetallesInsumo" WHERE "Detalle" = $1 ORDER BY "Insumo"',
+        [detalle.IdDetalle]
+      );
+      const insumosIDs = insumoDetalle.rows.map(row => row.Insumo).sort((a, b) => a - b);
+      if (JSON.stringify(insumosIDs) === JSON.stringify(insumosList)) {
+        yaExiste = detalle;
+        break;
+      }
+    }
+
     let diferenciaTotal = 0;
     let resultado = null;
 
-    if (!yaExiste.rows[0]) {
+    // USAR EL PRECIO CON EXTRAS
+    const precioBase = parseFloat(producto.rows[0].PrecioUnidad) || 0;
+    const precioUnitarioTotal = precioBase + precioExtra;
+
+    if (!yaExiste) {
       // Producto nuevo
       if (producto.rows[0].Stock < cantidadNum) {
         await client.query('ROLLBACK');
         return res.status(400).json({ message: 'Stock insuficiente' });
       }
       
-      const subtotal = producto.rows[0].PrecioUnidad * cantidadNum;
+      const subtotal = precioUnitarioTotal * cantidadNum;
       diferenciaTotal = subtotal;
 
-      const agregarProducto = await client.query(
+      const nuevoDetalle = await client.query(
         'INSERT INTO "DetallesVenta" ("Venta", "Producto", "Cantidad", "PrecioUnidad", "Subtotal") VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [carrito.rows[0].IdVenta, idProducto, cantidadNum, producto.rows[0].PrecioUnidad, subtotal]
+        [carrito.rows[0].IdVenta, idProducto, cantidadNum, precioUnitarioTotal, subtotal]
       );
-      resultado = agregarProducto.rows[0];
+      resultado = nuevoDetalle.rows[0];
+
+      // ============ INSERTAR INSUMOS CON CANTIDAD CORRECTA ============
+      for (const [insumoId, cantidadInsumo] of Object.entries(insumosAgrupados)) {
+        await client.query(
+          'INSERT INTO "DetallesInsumo" ("Detalle", "Insumo", "Cantidad") VALUES ($1, $2, $3)',
+          [nuevoDetalle.rows[0].IdDetalle, parseInt(insumoId), cantidadInsumo]
+        );
+      }
+      // ============ FIN INSERTAR INSUMOS ============
+      
     } else {
       // Producto existe - actualizar
-      const nuevaCantidad = yaExiste.rows[0].Cantidad + cantidadNum;
+      const nuevaCantidad = yaExiste.Cantidad + cantidadNum;
       
       if (producto.rows[0].Stock < nuevaCantidad) {
         await client.query('ROLLBACK');
         return res.status(400).json({ message: 'Stock insuficiente' });
       }
       
-      const subtotalAnterior = yaExiste.rows[0].Subtotal;
-      const nuevoSubtotal = nuevaCantidad * yaExiste.rows[0].PrecioUnidad;
-      diferenciaTotal = nuevoSubtotal - subtotalAnterior; // CORRECCIÓN CLAVE
+      const nuevoSubtotal = nuevaCantidad * precioUnitarioTotal;
+      diferenciaTotal = nuevoSubtotal - yaExiste.Subtotal;
 
-      const actualizarDetalle = await client.query(
-        'UPDATE "DetallesVenta" SET "Cantidad" = $1, "Subtotal" = $2 WHERE "IdDetalle" = $3 RETURNING *',
-        [nuevaCantidad, nuevoSubtotal, yaExiste.rows[0].IdDetalle]
+      const actualizar = await client.query(
+        'UPDATE "DetallesVenta" SET "Cantidad" = $1, "Subtotal" = $2, "PrecioUnidad" = $3 WHERE "IdDetalle" = $4 RETURNING *',
+        [nuevaCantidad, nuevoSubtotal, precioUnitarioTotal, yaExiste.IdDetalle]
       );
-      resultado = actualizarDetalle.rows[0];
+      resultado = actualizar.rows[0];
     }
     
     // Actualizar total con la diferencia
@@ -175,25 +297,28 @@ const agregarProducto = async (req, res) => {
       [diferenciaTotal, carrito.rows[0].IdVenta]
     );
     
-    await client.query('COMMIT'); // Confirmar transacción
+    await client.query('COMMIT');
     
     res.status(200).json({
       message: 'Producto agregado al carrito exitosamente',
-      detalle: resultado
+      detalle: resultado,
+      precioBase: precioBase,
+      precioExtra: precioExtra,
+      precioTotal: precioUnitarioTotal
     });
     
   } catch (error) {
-    await client.query('ROLLBACK'); // Revertir en caso de error
+    await client.query('ROLLBACK');
     console.error('Error al agregar producto:', error);
     res.status(500).json({ message: 'Error al agregar el producto al carrito', error: error.message });
   } finally {
-    client.release(); // Liberar conexión
+    client.release();
   }
-}
+};
 
 const actualizarCantidad = async (req, res) => {
   const { idUsuario } = req.user;
-  const { idProducto, nuevaCantidad } = req.query;
+  const { idDetalle, nuevaCantidad } = req.query; // Cambio aquí
   const client = await pool.connect();
   
   try {
@@ -202,7 +327,6 @@ const actualizarCantidad = async (req, res) => {
       return res.status(400).json({ message: 'Cantidad inválida' });
     }
 
-    // Iniciar transacción
     await client.query('BEGIN');
 
     const carrito = await client.query(
@@ -215,9 +339,10 @@ const actualizarCantidad = async (req, res) => {
       return res.status(404).json({ message: 'Carrito no encontrado' });
     }
 
+    // Buscar directamente por IdDetalle
     const detalle = await client.query(
-      'SELECT * FROM "DetallesVenta" WHERE "Venta" = $1 AND "Producto" = $2',
-      [carrito.rows[0].IdVenta, idProducto]
+      'SELECT * FROM "DetallesVenta" WHERE "IdDetalle" = $1 AND "Venta" = $2',
+      [idDetalle, carrito.rows[0].IdVenta]
     );
 
     if (!detalle.rows[0]) {
@@ -227,7 +352,7 @@ const actualizarCantidad = async (req, res) => {
 
     const producto = await client.query(
       'SELECT * FROM "Productos" WHERE "IdProducto" = $1',
-      [idProducto]
+      [detalle.rows[0].Producto] // Usar el producto del detalle
     );
 
     if (!producto.rows[0]) {
@@ -243,13 +368,11 @@ const actualizarCantidad = async (req, res) => {
     const nuevoSubtotal = nuevaCantidadNum * detalle.rows[0].PrecioUnidad;
     const diferenciaTotal = nuevoSubtotal - detalle.rows[0].Subtotal;
 
-    // Actualizar detalle
     await client.query(
       'UPDATE "DetallesVenta" SET "Cantidad" = $1, "Subtotal" = $2 WHERE "IdDetalle" = $3',
       [nuevaCantidadNum, nuevoSubtotal, detalle.rows[0].IdDetalle]
     );
 
-    // Actualizar total
     await client.query(
       'UPDATE "Ventas" SET "Total" = "Total" + $1 WHERE "IdVenta" = $2',
       [diferenciaTotal, carrito.rows[0].IdVenta]
@@ -272,54 +395,70 @@ const actualizarCantidad = async (req, res) => {
       error: error.message 
     });
   } finally {
-    client.release(); // Siempre liberar la conexión
+    client.release();
   }
 };
 
 const quitarProducto = async (req, res) => {
   const { idUsuario } = req.user;
-  const { idProducto } = req.query;
-  const client = await pool.connect(); // Obtener cliente para transacción
+  const { idDetalle } = req.query; // Cambio aquí
+  const client = await pool.connect();
+  
   try {
-    await client.query('BEGIN'); // Iniciar transacción
+    await client.query('BEGIN');
     
-    let carrito = await client.query(
+    const carrito = await client.query(
       'SELECT * FROM "Ventas" WHERE "Usuario" = $1 AND "Estado" = 1',
       [idUsuario]
     );
-    let detalle = await client.query(
-      'SELECT * FROM "DetallesVenta" WHERE "Venta" = $1 AND "Producto" = $2',
-      [carrito.rows[0].IdVenta, idProducto]
+
+    if (!carrito.rows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ message: 'Carrito no encontrado' });
+    }
+
+    // Buscar directamente por IdDetalle
+    const detalle = await client.query(
+      'SELECT * FROM "DetallesVenta" WHERE "IdDetalle" = $1 AND "Venta" = $2',
+      [idDetalle, carrito.rows[0].IdVenta]
     );
+
     if (!detalle.rows[0]) {
       await client.query('ROLLBACK');
       return res.status(404).json({ message: 'Producto no encontrado en el carrito' });
     }
+
     const diferenciaTotal = -detalle.rows[0].Subtotal;
-    // Eliminar detalle
+
+    await client.query(
+      'DELETE FROM "DetallesInsumo" WHERE "Detalle" = $1',
+      [detalle.rows[0].IdDetalle]
+    );
+
     await client.query(
       'DELETE FROM "DetallesVenta" WHERE "IdDetalle" = $1',
       [detalle.rows[0].IdDetalle]
     );
-    // Actualizar total con la diferencia
+
     await client.query(
       'UPDATE "Ventas" SET "Total" = "Total" + $1 WHERE "IdVenta" = $2',
       [diferenciaTotal, carrito.rows[0].IdVenta]
     );
-    // Confirmar transacción
+
     await client.query('COMMIT');
+
     res.status(200).json({
       message: 'Producto quitado del carrito exitosamente',
       detalle: detalle.rows[0]
     });
   } catch (error) {
-    await client.query('ROLLBACK'); // Revertir en caso de error
+    await client.query('ROLLBACK');
     console.error('Error al quitar producto:', error);
     res.status(500).json({ message: 'Error al quitar el producto del carrito', error: error.message });
   } finally {
-    client.release(); // Liberar conexión
+    client.release();
   }
-}
+};
 
 const confirmarPedido = async (req, res) => {
   const { idUsuario } = req.user;

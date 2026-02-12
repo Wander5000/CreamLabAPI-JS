@@ -114,7 +114,9 @@ const getPedidoByUserById = async (req, res) => {
         t."Cantidad", 
         t."PrecioUnitario", 
         t."Subtotal", 
-        t."IdProducto"
+        t."IdProducto",
+        i."IdInsumo",
+        i."NombreInsumo"
       FROM "Ventas" AS v
       INNER JOIN "Usuarios" AS u 
         ON v."Usuario" = u."IdUsuario"
@@ -134,9 +136,13 @@ const getPedidoByUserById = async (req, res) => {
           ON d."Producto" = p."IdProducto"
       ) AS t 
         ON v."IdVenta" = t."Venta"
+      LEFT JOIN "DetallesInsumo" AS di 
+        ON t."IdDetalle" = di."Detalle"
+      LEFT JOIN "Insumos" AS i 
+        ON di."Insumo" = i."IdInsumo"
       WHERE v."IdVenta" = $1 
         AND v."Usuario" = $2
-      ORDER BY t."IdDetalle"
+      ORDER BY t."IdDetalle", i."IdInsumo"
     `, [id, idUsuario]);
 
     if (rows.length === 0) {
@@ -150,6 +156,33 @@ const getPedidoByUserById = async (req, res) => {
       return f.toISOString().split('T')[0];
     };
 
+    // Agrupar insumos por detalle usando Map
+    const detallesMap = new Map();
+    
+    rows.forEach(row => {
+      if (row.IdDetalle) {
+        // Si el detalle no existe en el Map, lo creamos
+        if (!detallesMap.has(row.IdDetalle)) {
+          detallesMap.set(row.IdDetalle, {
+            idDetalle: row.IdDetalle,
+            producto: row.Producto,
+            cantidad: row.Cantidad,
+            precioUnitario: row.PrecioUnitario,
+            subtotal: row.Subtotal,
+            insumos: []
+          });
+        }
+        
+        // Si hay insumo asociado, lo agregamos al detalle
+        if (row.IdInsumo) {
+          detallesMap.get(row.IdDetalle).insumos.push({
+            idInsumo: row.IdInsumo,
+            nombreInsumo: row.NombreInsumo,
+          });
+        }
+      }
+    });
+
     // Construir el objeto pedido con el esquema especificado
     const pedido = {
       idVenta: rows[0].IdVenta,
@@ -160,21 +193,8 @@ const getPedidoByUserById = async (req, res) => {
       total: rows[0].Total,
       observaciones: rows[0].Observaciones,
       estado: rows[0].NombreEstado,
-      detalles: []
+      detalles: Array.from(detallesMap.values())
     };
-
-    // Agregar todos los detalles
-    rows.forEach(row => {
-      if (row.IdDetalle) {
-        pedido.detalles.push({
-          idDetalle: row.IdDetalle,
-          producto: row.Producto,
-          cantidad: row.Cantidad,
-          precioUnitario: row.PrecioUnitario,
-          subtotal: row.Subtotal
-        });
-      }
-    });
 
     res.status(200).json(pedido);
   } catch (error) {

@@ -7,6 +7,7 @@ const getAllProIns = async (req, res) => {
         SELECT
             i."IdInsumo" AS "idInsumo",
             i."NombreInsumo" AS "nombreInsumo",
+            i."PrecioUnidad" AS "precioUnitario",
             ci."IdCatInsumo" AS "idCategoriaInsumo",
             ci."NombreCatInsumo" AS "categoriaInsumo",
             pi."Minimo",
@@ -34,6 +35,7 @@ const getAllProIns = async (req, res) => {
             categoriasMap.get(nombreCategoria).insumos.push({
                 idInsumo: insumo.idInsumo,
                 nombreInsumo: insumo.nombreInsumo,
+                precioUnidad: insumo.precioUnitario
             });
         });
         const resultado = Array.from(categoriasMap.values());

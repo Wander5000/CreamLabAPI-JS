@@ -6,41 +6,45 @@ const getAllInsumos = async (req, res) => {
       i."NombreInsumo" AS "nombreInsumo",
       i."CategoriaInsumo" AS "idCategoriaInsumo", 
       c."NombreCatInsumo" AS "categoriaInsumo",
+      i."PrecioUnidad" AS "precioUnitario",
       i."UnidadMedida" AS "unidadMedida", 
-      i."Stock" AS "stock" 
+      i."Stock" AS "stock",
+      i."CantidadUnidad" AS "cantidadUnidad"
       FROM "Insumos" AS i
       INNER JOIN "CategoriasInsumo" AS c
         ON i."CategoriaInsumo" = c."IdCatInsumo"
       ORDER BY i."IdInsumo"`);
     res.json(rows);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Error al obtener los insumos', error });
   }
 };
 
 const postInsumo = async (req, res) => {
-  const { NombreInsumo, CategoriaInsumo, UnidadMedida, Stock } = req.body;
+  const { NombreInsumo, CategoriaInsumo, PrecioUnidad, UnidadMedida, Stock, CantidadUnidad } = req.body;
   try {
     const { rowCount } = await pool.query(
-      'INSERT INTO "Insumos" ("NombreInsumo", "CategoriaInsumo", "UnidadMedida", "Stock") VALUES ($1, $2, $3, $4)',
-      [NombreInsumo, CategoriaInsumo, UnidadMedida, Stock]
+      'INSERT INTO "Insumos" ("NombreInsumo", "CategoriaInsumo", "PrecioUnidad", "UnidadMedida", "Stock", "CantidadUnidad") VALUES ($1, $2, $3, $4, $5, $6)',
+      [NombreInsumo, CategoriaInsumo, PrecioUnidad, UnidadMedida, Stock, CantidadUnidad]
     );
     if (rowCount === 0) {
       return res.status(400).json({ message: 'No se pudo crear el insumo' });
     }
     res.status(201).json({ message: 'Insumo creado exitosamente' });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Error al crear el insumo', error });
   }
 };
 
 const putInsumo = async (req, res) => {
   const { id } = req.params;
-  const { NombreInsumo, CategoriaInsumo, UnidadMedida, Stock } = req.body;
+  const { NombreInsumo, CategoriaInsumo, PrecioUnidad, UnidadMedida, Stock, CantidadUnidad } = req.body;
   try {
     const { rowCount } = await pool.query(
-      'UPDATE "Insumos" SET "NombreInsumo" = $1, "CategoriaInsumo" = $2, "UnidadMedida" = $3, "Stock" = $4 WHERE "IdInsumo" = $5',
-      [NombreInsumo, CategoriaInsumo, UnidadMedida, Stock, id]
+      'UPDATE "Insumos" SET "NombreInsumo" = $1, "CategoriaInsumo" = $2, "PrecioUnidad" = $3, "UnidadMedida" = $4, "Stock" = $5, "CantidadUnidad" = $6 WHERE "IdInsumo" = $7',
+      [NombreInsumo, CategoriaInsumo, PrecioUnidad, UnidadMedida, Stock, CantidadUnidad, id]
     );
     if (rowCount === 0) {
       return res.status(404).json({ message: 'Insumo no encontrado' });
