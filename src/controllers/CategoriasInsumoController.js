@@ -26,7 +26,6 @@ const postCategoriaInsumo = async (req, res) => {
         res.status(201).json({ message: 'Categoria de insumo creada exitosamente' });
     } catch (error) {
         //5 Manejar errores inesperados
-        console.error(error);
         res.status(500).json({ error: 'Error al crear la categoria de insumo' });
     }
 };

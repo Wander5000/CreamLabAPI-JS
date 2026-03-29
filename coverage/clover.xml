@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1774751453354" clover="3.2.0">
+  <project timestamp="1774751453354" name="All files">
+    <metrics statements="304" coveredstatements="300" conditionals="111" coveredconditionals="103" methods="32" coveredmethods="29" elements="447" coveredelements="432" complexity="0" loc="304" ncloc="304" packages="1" files="6" classes="6"/>
+    <file name="CategoriasController.js" path="C:\Users\joegi\Desktop\CreamLabAPI\src\controllers\CategoriasController.js">
+      <metrics statements="42" coveredstatements="42" conditionals="18" coveredconditionals="18" methods="4" coveredmethods="4"/>
+      <line num="1" count="1" type="stmt"/>
+      <line num="3" count="1" type="stmt"/>
+      <line num="4" count="2" type="stmt"/>
+      <line num="5" count="2" type="stmt"/>
+      <line num="13" count="1" type="stmt"/>
+      <line num="15" count="1" type="stmt"/>
+      <line num="19" count="1" type="stmt"/>
+      <line num="20" count="8" type="stmt"/>
+      <line num="21" count="8" type="stmt"/>
+      <line num="24" count="8" type="cond" truecount="4" falsecount="0"/>
+      <line num="25" count="1" type="stmt"/>
+      <line num="28" count="7" type="cond" truecount="2" falsecount="0"/>
+      <line num="29" count="1" type="stmt"/>
+      <line num="30" count="6" type="cond" truecount="2" falsecount="0"/>
+      <line num="31" count="1" type="stmt"/>
+      <line num="34" count="5" type="cond" truecount="2" falsecount="0"/>
+      <line num="35" count="1" type="stmt"/>
+      <line num="36" count="4" type="cond" truecount="2" falsecount="0"/>
+      <line num="37" count="1" type="stmt"/>
+      <line num="40" count="3" type="stmt"/>
+      <line num="45" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="46" count="1" type="stmt"/>
+      <line num="49" count="1" type="stmt"/>
+      <line num="52" count="1" type="stmt"/>
+      <line num="56" count="1" type="stmt"/>
+      <line num="57" count="3" type="stmt"/>
+      <line num="58" count="3" type="stmt"/>
+      <line num="59" count="3" type="stmt"/>
+      <line num="60" count="3" type="stmt"/>
+      <line num="64" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="65" count="1" type="stmt"/>
+      <line num="67" count="1" type="stmt"/>
+      <line num="69" count="1" type="stmt"/>
+      <line num="73" count="1" type="stmt"/>
+      <line num="74" count="3" type="stmt"/>
+      <line num="75" count="3" type="stmt"/>
+      <line num="76" count="3" type="stmt"/>
+      <line num="80" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="81" count="1" type="stmt"/>
+      <line num="83" count="1" type="stmt"/>
+      <line num="85" count="1" type="stmt"/>
+      <line num="89" count="1" type="stmt"/>
+    </file>
+    <file name="EstadosController.js" path="C:\Users\joegi\Desktop\CreamLabAPI\src\controllers\EstadosController.js">
+      <metrics statements="36" coveredstatements="36" conditionals="10" coveredconditionals="10" methods="4" coveredmethods="4"/>
+      <line num="1" count="1" type="stmt"/>
+      <line num="3" count="1" type="stmt"/>
+      <line num="4" count="2" type="stmt"/>
+      <line num="5" count="2" type="stmt"/>
+      <line num="6" count="1" type="stmt"/>
+      <line num="8" count="1" type="stmt"/>
+      <line num="12" count="1" type="stmt"/>
+      <line num="13" count="5" type="stmt"/>
+      <line num="14" count="5" type="stmt"/>
+      <line num="16" count="5" type="cond" truecount="2" falsecount="0"/>
+      <line num="17" count="1" type="stmt"/>
+      <line num="20" count="4" type="cond" truecount="2" falsecount="0"/>
+      <line num="21" count="1" type="stmt"/>
+      <line num="24" count="3" type="stmt"/>
+      <line num="29" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="30" count="1" type="stmt"/>
+      <line num="33" count="1" type="stmt"/>
+      <line num="36" count="1" type="stmt"/>
+      <line num="40" count="1" type="stmt"/>
+      <line num="41" count="3" type="stmt"/>
+      <line num="42" count="3" type="stmt"/>
+      <line num="43" count="3" type="stmt"/>
+      <line num="44" count="3" type="stmt"/>
+      <line num="48" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="49" count="1" type="stmt"/>
+      <line num="51" count="1" type="stmt"/>
+      <line num="53" count="1" type="stmt"/>
+      <line num="57" count="1" type="stmt"/>
+      <line num="58" count="3" type="stmt"/>
+      <line num="59" count="3" type="stmt"/>
+      <line num="60" count="3" type="stmt"/>
+      <line num="64" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="65" count="1" type="stmt"/>
+      <line num="67" count="1" type="stmt"/>
+      <line num="70" count="1" type="stmt"/>
+      <line num="74" count="1" type="stmt"/>
+    </file>
+    <file name="InsumosController.js" path="C:\Users\joegi\Desktop\CreamLabAPI\src\controllers\InsumosController.js">
+      <metrics statements="38" coveredstatements="38" conditionals="20" coveredconditionals="20" methods="4" coveredmethods="4"/>
+      <line num="1" count="1" type="stmt"/>
+      <line num="3" count="1" type="stmt"/>
+      <line num="4" count="2" type="stmt"/>
+      <line num="5" count="2" type="stmt"/>
+      <line num="17" count="1" type="stmt"/>
+      <line num="20" count="1" type="stmt"/>
+      <line num="24" count="1" type="stmt"/>
+      <line num="25" count="7" type="stmt"/>
+      <line num="26" count="7" type="stmt"/>
+      <line num="28" count="7" type="cond" truecount="8" falsecount="0"/>
+      <line num="29" count="2" type="stmt"/>
+      <line num="32" count="5" type="cond" truecount="4" falsecount="0"/>
+      <line num="33" count="1" type="stmt"/>
+      <line num="36" count="4" type="cond" truecount="2" falsecount="0"/>
+      <line num="37" count="1" type="stmt"/>
+      <line num="40" count="3" type="stmt"/>
+      <line num="45" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="46" count="1" type="stmt"/>
+      <line num="49" count="1" type="stmt"/>
+      <line num="52" count="1" type="stmt"/>
+      <line num="56" count="1" type="stmt"/>
+      <line num="57" count="3" type="stmt"/>
+      <line num="58" count="3" type="stmt"/>
+      <line num="59" count="3" type="stmt"/>
+      <line num="60" count="3" type="stmt"/>
+      <line num="64" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="65" count="1" type="stmt"/>
+      <line num="67" count="1" type="stmt"/>
+      <line num="69" count="1" type="stmt"/>
+      <line num="73" count="1" type="stmt"/>
+      <line num="74" count="3" type="stmt"/>
+      <line num="75" count="3" type="stmt"/>
+      <line num="76" count="3" type="stmt"/>
+      <line num="80" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="81" count="1" type="stmt"/>
+      <line num="83" count="1" type="stmt"/>
+      <line num="86" count="1" type="stmt"/>
+      <line num="90" count="1" type="stmt"/>
+    </file>
+    <file name="ProductosController.js" path="C:\Users\joegi\Desktop\CreamLabAPI\src\controllers\ProductosController.js">
+      <metrics statements="113" coveredstatements="109" conditionals="34" coveredconditionals="26" methods="12" coveredmethods="9"/>
+      <line num="1" count="1" type="stmt"/>
+      <line num="2" count="1" type="stmt"/>
+      <line num="4" count="1" type="stmt"/>
+      <line num="5" count="2" type="stmt"/>
+      <line num="6" count="2" type="stmt"/>
+      <line num="20" count="1" type="stmt"/>
+      <line num="22" count="1" type="stmt"/>
+      <line num="26" count="1" type="stmt"/>
+      <line num="27" count="3" type="stmt"/>
+      <line num="28" count="3" type="stmt"/>
+      <line num="29" count="3" type="stmt"/>
+      <line num="53" count="3" type="stmt"/>
+      <line num="54" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="55" count="1" type="stmt"/>
+      <line num="58" count="1" type="stmt"/>
+      <line num="59" count="1" type="stmt"/>
+      <line num="60" count="1" type="stmt"/>
+      <line num="61" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="62" count="1" type="stmt"/>
+      <line num="74" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="75" count="0" type="stmt"/>
+      <line num="83" count="1" type="stmt"/>
+      <line num="84" count="1" type="stmt"/>
+      <line num="86" count="1" type="stmt"/>
+      <line num="90" count="1" type="stmt"/>
+      <line num="91" count="2" type="stmt"/>
+      <line num="92" count="2" type="stmt"/>
+      <line num="107" count="1" type="stmt"/>
+      <line num="109" count="1" type="stmt"/>
+      <line num="113" count="1" type="stmt"/>
+      <line num="114" count="2" type="stmt"/>
+      <line num="115" count="2" type="stmt"/>
+      <line num="116" count="2" type="stmt"/>
+      <line num="131" count="1" type="stmt"/>
+      <line num="133" count="1" type="stmt"/>
+      <line num="137" count="1" type="stmt"/>
+      <line num="138" count="6" type="stmt"/>
+      <line num="139" count="6" type="stmt"/>
+      <line num="141" count="6" type="stmt"/>
+      <line num="142" count="6" type="stmt"/>
+      <line num="144" count="6" type="cond" truecount="1" falsecount="1"/>
+      <line num="145" count="6" type="stmt"/>
+      <line num="147" count="6" type="cond" truecount="2" falsecount="0"/>
+      <line num="150" count="1" type="stmt"/>
+      <line num="155" count="5" type="cond" truecount="2" falsecount="0"/>
+      <line num="156" count="1" type="stmt"/>
+      <line num="164" count="4" type="cond" truecount="2" falsecount="0"/>
+      <line num="165" count="1" type="stmt"/>
+      <line num="166" count="1" type="stmt"/>
+      <line num="168" count="1" type="stmt"/>
+      <line num="172" count="1" type="stmt"/>
+      <line num="176" count="4" type="stmt"/>
+      <line num="179" count="4" type="stmt"/>
+      <line num="186" count="4" type="stmt"/>
+      <line num="190" count="4" type="stmt"/>
+      <line num="191" count="3" type="stmt"/>
+      <line num="194" count="3" type="cond" truecount="2" falsecount="0"/>
+      <line num="195" count="1" type="stmt"/>
+      <line num="202" count="1" type="stmt"/>
+      <line num="204" count="1" type="stmt"/>
+      <line num="209" count="3" type="stmt"/>
+      <line num="212" count="3" type="stmt"/>
+      <line num="218" count="1" type="stmt"/>
+      <line num="219" count="1" type="cond" truecount="2" falsecount="2"/>
+      <line num="220" count="0" type="stmt"/>
+      <line num="221" count="0" type="stmt"/>
+      <line num="223" count="1" type="stmt"/>
+      <line num="227" count="1" type="stmt"/>
+      <line num="228" count="4" type="stmt"/>
+      <line num="229" count="4" type="stmt"/>
+      <line num="230" count="4" type="stmt"/>
+      <line num="231" count="4" type="stmt"/>
+      <line num="232" count="4" type="stmt"/>
+      <line num="233" count="4" type="stmt"/>
+      <line num="234" count="3" type="cond" truecount="2" falsecount="0"/>
+      <line num="235" count="1" type="stmt"/>
+      <line num="237" count="2" type="stmt"/>
+      <line num="239" count="2" type="stmt"/>
+      <line num="241" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="242" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="243" count="1" type="stmt"/>
+      <line num="245" count="1" type="stmt"/>
+      <line num="246" count="1" type="stmt"/>
+      <line num="247" count="1" type="stmt"/>
+      <line num="251" count="1" type="stmt"/>
+      <line num="254" count="2" type="stmt"/>
+      <line num="260" count="2" type="stmt"/>
+      <line num="261" count="2" type="stmt"/>
+      <line num="262" count="2" type="stmt"/>
+      <line num="264" count="1" type="cond" truecount="2" falsecount="2"/>
+      <line num="265" count="0" type="stmt"/>
+      <line num="267" count="1" type="stmt"/>
+      <line num="271" count="1" type="stmt"/>
+      <line num="272" count="3" type="stmt"/>
+      <line num="273" count="3" type="stmt"/>
+      <line num="274" count="3" type="stmt"/>
+      <line num="280" count="3" type="stmt"/>
+      <line num="281" count="3" type="stmt"/>
+      <line num="282" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="283" count="1" type="stmt"/>
+      <line num="285" count="1" type="stmt"/>
+      <line num="287" count="1" type="stmt"/>
+      <line num="291" count="1" type="stmt"/>
+      <line num="292" count="3" type="stmt"/>
+      <line num="293" count="3" type="stmt"/>
+      <line num="294" count="3" type="stmt"/>
+      <line num="299" count="3" type="stmt"/>
+      <line num="300" count="3" type="stmt"/>
+      <line num="301" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="302" count="1" type="stmt"/>
+      <line num="304" count="1" type="stmt"/>
+      <line num="306" count="1" type="stmt"/>
+      <line num="310" count="1" type="stmt"/>
+    </file>
+    <file name="RolesController.js" path="C:\Users\joegi\Desktop\CreamLabAPI\src\controllers\RolesController.js">
+      <metrics statements="34" coveredstatements="34" conditionals="8" coveredconditionals="8" methods="4" coveredmethods="4"/>
+      <line num="1" count="1" type="stmt"/>
+      <line num="3" count="1" type="stmt"/>
+      <line num="4" count="2" type="stmt"/>
+      <line num="5" count="2" type="stmt"/>
+      <line num="6" count="1" type="stmt"/>
+      <line num="8" count="1" type="stmt"/>
+      <line num="12" count="1" type="stmt"/>
+      <line num="13" count="4" type="stmt"/>
+      <line num="14" count="4" type="stmt"/>
+      <line num="16" count="4" type="cond" truecount="2" falsecount="0"/>
+      <line num="17" count="1" type="stmt"/>
+      <line num="20" count="3" type="stmt"/>
+      <line num="22" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="23" count="1" type="stmt"/>
+      <line num="26" count="1" type="stmt"/>
+      <line num="29" count="1" type="stmt"/>
+      <line num="33" count="1" type="stmt"/>
+      <line num="34" count="3" type="stmt"/>
+      <line num="35" count="3" type="stmt"/>
+      <line num="36" count="3" type="stmt"/>
+      <line num="37" count="3" type="stmt"/>
+      <line num="41" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="42" count="1" type="stmt"/>
+      <line num="44" count="1" type="stmt"/>
+      <line num="46" count="1" type="stmt"/>
+      <line num="50" count="1" type="stmt"/>
+      <line num="51" count="3" type="stmt"/>
+      <line num="52" count="3" type="stmt"/>
+      <line num="53" count="3" type="stmt"/>
+      <line num="57" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="58" count="1" type="stmt"/>
+      <line num="60" count="1" type="stmt"/>
+      <line num="62" count="1" type="stmt"/>
+      <line num="66" count="1" type="stmt"/>
+    </file>
+    <file name="UsuariosController.js" path="C:\Users\joegi\Desktop\CreamLabAPI\src\controllers\UsuariosController.js">
+      <metrics statements="41" coveredstatements="41" conditionals="21" coveredconditionals="21" methods="4" coveredmethods="4"/>
+      <line num="1" count="1" type="stmt"/>
+      <line num="2" count="1" type="stmt"/>
+      <line num="5" count="1" type="stmt"/>
+      <line num="6" count="2" type="stmt"/>
+      <line num="7" count="2" type="stmt"/>
+      <line num="23" count="1" type="stmt"/>
+      <line num="25" count="1" type="stmt"/>
+      <line num="29" count="1" type="stmt"/>
+      <line num="30" count="7" type="stmt"/>
+      <line num="31" count="7" type="stmt"/>
+      <line num="34" count="7" type="cond" truecount="9" falsecount="0"/>
+      <line num="35" count="1" type="stmt"/>
+      <line num="38" count="6" type="cond" truecount="4" falsecount="0"/>
+      <line num="39" count="1" type="stmt"/>
+      <line num="42" count="5" type="cond" truecount="2" falsecount="0"/>
+      <line num="43" count="1" type="stmt"/>
+      <line num="45" count="4" type="stmt"/>
+      <line num="47" count="3" type="stmt"/>
+      <line num="52" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="53" count="1" type="stmt"/>
+      <line num="56" count="1" type="stmt"/>
+      <line num="59" count="2" type="stmt"/>
+      <line num="63" count="1" type="stmt"/>
+      <line num="64" count="3" type="stmt"/>
+      <line num="65" count="3" type="stmt"/>
+      <line num="66" count="3" type="stmt"/>
+      <line num="67" count="3" type="stmt"/>
+      <line num="71" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="72" count="1" type="stmt"/>
+      <line num="74" count="1" type="stmt"/>
+      <line num="76" count="1" type="stmt"/>
+      <line num="80" count="1" type="stmt"/>
+      <line num="81" count="3" type="stmt"/>
+      <line num="82" count="3" type="stmt"/>
+      <line num="83" count="3" type="stmt"/>
+      <line num="87" count="2" type="stmt"/>
+      <line num="88" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="89" count="1" type="stmt"/>
+      <line num="91" count="1" type="stmt"/>
+      <line num="93" count="1" type="stmt"/>
+      <line num="97" count="1" type="stmt"/>
+    </file>
+  </project>
+</coverage>

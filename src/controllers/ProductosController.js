@@ -71,7 +71,6 @@ WHERE p."IdProducto" = $1
           catinsumos: []
         });
       }
-
       if (row.NombreCatInsumo) {
         productoMap.get(prodId).catinsumos.push({
           nombreCatInsumo: row.NombreCatInsumo,
@@ -140,21 +139,19 @@ const postProduct = async (req, res) => {
   let ImagenProducto = { Url: null, PublicID: null };
   
   try {
-    // Parsear Insumos si viene como string (común en multipart/form-data)
     let CatInsumos = [];
+    // 1 Revisar si hay CatInsumos Asociados
     if (req.body.CatInsumos) {
       try {
+        //2 Parsear si viene como string
         CatInsumos = typeof req.body.CatInsumos === 'string' 
-          ? JSON.parse(req.body.CatInsumos) 
-          : req.body.CatInsumos;
-        
-        console.log('Categorias parseadas:', CatInsumos);
+          ? JSON.parse(req.body.CatInsumos) : req.body.CatInsumos;
       } catch (parseError) {
-        console.error('Error al parsear CatInsumos:', parseError);
         return res.status(400).json({ message: 'CatInsumos debe ser un JSON válido' });
       }
     }
-    // Validar que CatInsumos sea un array
+
+    //3 Validar que CatInsumos sea un array
     if (!Array.isArray(CatInsumos)) {
       return res.status(400).json({ 
         message: 'CatInsumos debe ser un array',
@@ -163,7 +160,7 @@ const postProduct = async (req, res) => {
       });
     }
 
-    // Subir imagen a Cloudinary si existe
+    //4 Subir imagen a Cloudinary si existe
     if(req.file){
       const b64 = Buffer.from(req.file.buffer).toString('base64');
       const dataURI = `data:${req.file.mimetype};base64,${b64}`;
@@ -186,20 +183,14 @@ const postProduct = async (req, res) => {
       RETURNING *
     `;
     
-    const valuesProducto = [ 
-      NombreProducto, 
-      Descripcion, 
-      CategoriaProducto, 
-      PrecioUnidad, 
-      Stock, 
-      ImagenProducto.Url, 
-      ImagenProducto.PublicID
+    const valuesProducto = [ NombreProducto, Descripcion, CategoriaProducto, PrecioUnidad, Stock, ImagenProducto.Url, ImagenProducto.PublicID
     ];
     
+    //5 Insertar producto y obtener su ID
     const resultProducto = await pool.query(queryProducto, valuesProducto);
     const productoId = resultProducto.rows[0].IdProducto;
 
-    // Insertar insumos si existen
+    //6 Insertar insumos si existen
     if (CatInsumos.length > 0) {
       const queryInsumo = `
         INSERT INTO "ProductoInsumo" 
@@ -207,7 +198,9 @@ const postProduct = async (req, res) => {
         VALUES ($1, $2, $3, $4, $5)
       `;
       
+      //7 Insertar cada insumo asociado al producto
       for (const catinsumo of CatInsumos) {
+        //8 Ejecutar Insercion de Datos
         await pool.query(queryInsumo, [productoId, catinsumo.CategoriaInsumo, catinsumo.Minimo, catinsumo.Maximo, catinsumo.Obligatorio]);
       }
     }
@@ -215,6 +208,7 @@ const postProduct = async (req, res) => {
     // Confirmar transacción
     await pool.query('COMMIT');
     
+    //9 Devolver el producto creado con sus insumos asociados
     res.status(201).json({ 
       message: 'Producto creado exitosamente', 
       producto: resultProducto.rows[0] 
@@ -226,7 +220,6 @@ const postProduct = async (req, res) => {
       await cloudinary.uploader.destroy(ImagenProducto.PublicID)
         .catch(err => console.log('Error al eliminar la imagen de Cloudinary:', err));
     }
-    console.error('Error al insertar el producto en la base de datos:', error);
     res.status(500).json({ message: 'Error al crear el producto', error: error.message });
   }
 };
@@ -271,7 +264,6 @@ const putProduct = async (req, res) => {
     if (ImagenProducto.PublicID && req.file) {
       await cloudinary.uploader.destroy(ImagenProducto.PublicID).catch(err => console.log('Error al eliminar la imagen de Cloudinary:', err));
     }
-    console.error('Error al actualizar el producto en la base de datos:', error);
     res.status(500).json({ message: 'Error al actualizar el producto', error });
   }
 };
@@ -292,7 +284,6 @@ const changeProductState = async (req, res) => {
     }
     res.status(200).json({ message: 'Estado del producto actualizado exitosamente', producto: queryResult.rows[0] });
   } catch (error) {
-    console.error('Error al actualizar el estado del producto en la base de datos:', error);
     res.status(500).json({ message: 'Error al actualizar el estado del producto', error });
   }
 };
@@ -312,7 +303,6 @@ const deleteProduct = async (req, res) => {
     }
     res.status(200).json({ message: 'Producto eliminado exitosamente', producto: queryResult.rows[0] });
   } catch (error) {
-    console.error('Error al eliminar el producto en la base de datos:', error);
     res.status(500).json({ message: 'Error al eliminar el producto', error });
   }
 };

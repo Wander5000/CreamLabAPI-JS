@@ -22,7 +22,6 @@ const getAllUsers = async (req, res) => {
     
     res.status(200).json(rows);
   } catch (error) {
-    console.error('Error al obtener los usuarios:', error);
     res.status(500).json({ message: 'Error al obtener los usuarios' });
   }
 };
@@ -30,17 +29,33 @@ const getAllUsers = async (req, res) => {
 const postUser = async (req, res) => {
   const { NombreUsuario, Correo, Password, TipoDocumento, NumeroDocumento, Direccion, Rol } = req.body;
   try{
+
+    // 1, 2, 3, 4, 5, 6 y 7:Validar que todos los campos estén presentes
+    if (!NombreUsuario || !Correo || !Password || !TipoDocumento || !NumeroDocumento || !Direccion || !Rol) {
+      return res.status(400).json({ message: 'Todos los campos son obligatorios' });
+    }
+    //8 y 9: Verificar el tamaño del Nombre de Usuario
+    if( NombreUsuario.length < 3 || NombreUsuario.length > 50) {
+      return res.status(400).json({ message: 'El nombre de usuario debe tener entre 3 y 50 caracteres' });
+    }
+    //10: Verificar el tamaño de la contraseña
+    if( Password.length < 8) {
+      return res.status(400).json({ message: 'La contraseña debe tener al menos 8 caracteres' });
+    }
     hashedPassword = await bcrypt.hash(Password, 10);
+    //11: Enviar datos a la base de datos
     const { rowCount } = await pool.query(
       'INSERT INTO "Usuarios" ("NombreUsuario", "Correo", "Password", "TipoDocumento", "NumeroDocumento", "Direccion", "Rol", "Estado") VALUES ($1, $2, $3, $4, $5, $6, $7, true)',
       [NombreUsuario, Correo, hashedPassword, TipoDocumento, NumeroDocumento, Direccion, Rol]
     );
+    //12: Verificar si la inserción fue exitosa
     if (rowCount === 0) {
       return res.status(400).json({ message: 'No se pudo crear el usuario' });
     }
+    //13: Devolver el usuario creado
     res.status(201).json({ message: 'Usuario creado exitosamente' });
   }catch (error) {
-    console.error(error);
+    //14: Manejar errores inesperados
     res.status(500).json({ message: 'Error al crear el usuario' });
   }
 };
@@ -58,7 +73,6 @@ const updateUser = async (req, res) => {
     }
     res.status(200).json({ message: 'Usuario actualizado exitosamente' });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Error al actualizar el usuario' });
   }
 };
@@ -76,7 +90,6 @@ const changeUserStatus = async (req, res) => {
     }
     res.status(204).json({ message: 'Estado del usuario actualizado exitosamente' });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Error al actualizar el estado del usuario' });
   }
 };

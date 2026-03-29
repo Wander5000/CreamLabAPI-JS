@@ -16,7 +16,7 @@ const getAllInsumos = async (req, res) => {
       ORDER BY i."IdInsumo"`);
     res.json(rows);
   } catch (error) {
-    console.error(error);
+
     res.status(500).json({ message: 'Error al obtener los insumos', error });
   }
 };
@@ -24,16 +24,31 @@ const getAllInsumos = async (req, res) => {
 const postInsumo = async (req, res) => {
   const { NombreInsumo, CategoriaInsumo, PrecioUnidad, UnidadMedida, Stock, CantidadUnidad } = req.body;
   try {
+    //1, 2, 3, 4, 5 y 6: Validar que todos los campos estén presentes
+      if (!NombreInsumo || !CategoriaInsumo || !PrecioUnidad || !UnidadMedida || Stock === undefined || CantidadUnidad === undefined) {
+        return res.status(400).json({ message: 'Todos los campos son obligatorios' });
+      }
+      //7 y 8: Verificar el tamaño del Nombre del Insumo y que el precio por unidad sea mayor a 0
+      if (NombreInsumo.length < 3 || NombreInsumo.length > 50) {
+        return res.status(400).json({ message: 'El nombre del insumo debe tener entre 3 y 50 caracteres' });
+      }
+      //9: Verificar que el precio por unidad sea mayor a 0
+      if (PrecioUnidad <= 0) {
+        return res.status(400).json({ message: 'El precio por unidad debe ser mayor a 0' });
+      }
+    //10: Enviar datos a la base de datos
     const { rowCount } = await pool.query(
       'INSERT INTO "Insumos" ("NombreInsumo", "CategoriaInsumo", "PrecioUnidad", "UnidadMedida", "Stock", "CantidadUnidad") VALUES ($1, $2, $3, $4, $5, $6)',
       [NombreInsumo, CategoriaInsumo, PrecioUnidad, UnidadMedida, Stock, CantidadUnidad]
     );
+    //11: Verificar si la inserción fue exitosa
     if (rowCount === 0) {
       return res.status(400).json({ message: 'No se pudo crear el insumo' });
     }
+    //12: Devolver el insumo creado
     res.status(201).json({ message: 'Insumo creado exitosamente' });
   } catch (error) {
-    console.error(error);
+    //13: Manejar errores inesperados
     res.status(500).json({ message: 'Error al crear el insumo', error });
   }
 };

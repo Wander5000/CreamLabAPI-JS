@@ -19,7 +19,6 @@ const getAllClients = async (req, res) => {
     
     res.status(200).json(rows);
   } catch(error) {
-    console.error('Error al obtener clientes:', error);
     res.status(500).json({ 
       message: 'Error al obtener los clientes',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -40,7 +39,6 @@ const postClient = async (req, res) => {
     }
     res.status(201).json({ message: 'Cliente creado exitosamente' });
   }catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Error al crear el cliente' });
   }
 };
@@ -59,7 +57,6 @@ const updateClient = async (req, res) => {
     }
     res.status(200).json({ message: 'Cliente actualizado exitosamente' });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Error al actualizar el cliente' });
   }
 };
@@ -67,17 +64,16 @@ const updateClient = async (req, res) => {
 const changeClientStatus = async (req, res) => {
   const { id } = req.params;
   try {
-    const { rows } = await pool.query(
+    const result = await pool.query(
       'UPDATE "Usuarios" SET "Estado" = NOT "Estado" WHERE "IdUsuario" = $1',
       [id]
     );
-    const { rowCount } = rows;
-    if (rowCount === 0) {
+    if (result.rowCount === 0) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
     }
     res.status(204).json({ message: 'Estado del cliente actualizado exitosamente' });
   } catch (error) {
-    console.error(error);
+
     res.status(500).json({ message: 'Error al actualizar el estado del cliente' });
   }
 };
